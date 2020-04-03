@@ -1,0 +1,72 @@
+<script src="https://d3js.org/d3.v5.min.js"></script>
+<script src="https://d3js.org/topojson.v2.min.js"></script>
+<div id="container" class="svg-container"> </div>
+
+<script>
+                  var width = 400; //for simplicity set to fixed value
+                var height = 200; //for simplicity set to fixed value
+
+                var projection = d3.geoMercator();
+
+                var path = d3.geoPath()
+                    .projection(projection);
+
+                var svg = d3.select("#container").append("svg")
+                      .classed("svg-content", true)
+                      .attr("width", width)
+                      .attr("height", height);
+
+            //Example data
+            var countries = ['germany', 'italy', 'switzerland', 'france']; 
+
+            function loadJsonFiles() {
+
+                  var files = ["LA-22-louisiana-parishes.json"];
+
+                  var promises = [];
+                  var allCountryData = [];
+
+                  files.forEach(function(url) {
+                          promises.push(d3.json(url))
+                  });
+
+                  return Promise.all(promises)
+                      .then(function(countryData) {
+
+                      for (var i = 0; i < countryData.length; i++) {
+
+                        allCountryData.push(countryData[i]);
+
+                      }
+                    return allCountryData;
+                  });
+            }
+
+            loadJsonFiles().then(function(allCountryData) {
+
+                var allBounds = [];
+                var objName; 
+                var countryData;
+
+
+				var featureCollection = {type:"FeatureCollection","features":[]}
+				for (var i = 0; i < allCountryData.length; i++) {
+
+					 objName = allCountryData[i].objects[countries[i]];
+					 countryData = topojson.feature(allCountryData[i], objName);
+
+					 featureCollection.features.push(...countryData.features)
+
+				}
+				
+				projection.fitSize([400,200],featureCollection)
+				
+				svg.selectAll("path")
+				  .data(featureCollection.features)
+				  .enter()
+				  .append("path")
+				  .attr("d",path);
+
+            });
+</script>
+
